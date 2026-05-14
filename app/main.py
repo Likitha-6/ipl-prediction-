@@ -1,12 +1,11 @@
 """
-IPL Match Prediction Dashboard - PREMIUM DESIGN (NO CACHE)
-Modern, attractive interface with advanced styling and animations
+IPL Match Prediction Dashboard - WITH VENUE SELECTION
+Select any two teams and venue, app determines home/away automatically
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-from datetime import datetime
 import sys
 from pathlib import Path
 import plotly.graph_objects as go
@@ -101,6 +100,17 @@ st.markdown("""
         color: #f1f5f9;
         margin: 1rem 0;
         font-family: 'Poppins', sans-serif;
+    }
+    
+    .team-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
     }
     
     .probability-container {
@@ -276,12 +286,51 @@ st.markdown("""
         transform: translateY(-3px);
         box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
     }
+    
+    .venue-info {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        border-left: 4px solid #10b981;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin: 1.5rem 0;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .venue-info h4 {
+        color: #10b981;
+        margin: 0 0 0.8rem 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    
+    .venue-info p {
+        margin: 0.3rem 0;
+        color: #cbd5e1;
+        font-size: 0.9rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # LOAD DATA - NO CACHE
 analyzer = IPLAnalyzer('data/IPL_FINAL.csv')
 data_loaded = analyzer.df is not None
+
+def determine_home_team(team1, team2, venue):
+    """Determine which team is home based on venue name"""
+    venue_lower = venue.lower()
+    team1_lower = team1.lower()
+    team2_lower = team2.lower()
+    
+    # Extract city names from teams
+    team1_city = team1_lower.split()[-1] if len(team1_lower.split()) > 0 else team1_lower
+    team2_city = team2_lower.split()[-1] if len(team2_lower.split()) > 0 else team2_lower
+    
+    if team1_city in venue_lower or team1.lower() in venue_lower:
+        return team1, team2  # team1 is home
+    elif team2_city in venue_lower or team2.lower() in venue_lower:
+        return team2, team1  # team2 is home
+    else:
+        return team1, team2  # Default to team1 as home
 
 def main():
     st.markdown("""
@@ -320,27 +369,45 @@ def prediction_page():
     
     team_stats = analyzer.get_team_statistics()
     all_teams = sorted(team_stats.keys())
+    all_venues = sorted(analyzer.df['venue'].dropna().unique())
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        home_team = st.selectbox("Home Team", all_teams, key="home")
+        team1 = st.selectbox("Team 1", all_teams, key="team1")
     
     with col2:
-        away_team = st.selectbox("Away Team", [t for t in all_teams if t != home_team], key="away")
+        team2 = st.selectbox("Team 2", [t for t in all_teams if t != team1], key="team2")
+    
+    with col3:
+        venue = st.selectbox("Venue", all_venues, key="venue")
+    
+    # Determine home team automatically
+    home_team, away_team = determine_home_team(team1, team2, venue)
     
     st.markdown("### Match Context")
     col1, col2 = st.columns(2)
     
     with col1:
-        toss_winner = st.radio("Toss Winner", [home_team, away_team], horizontal=True)
+        toss_winner = st.radio("Toss Winner", [home_team, away_team], horizontal=True, key="toss")
     
     with col2:
-        toss_decision = st.radio("Decision", ["Bat", "Field"], horizontal=True)
+        toss_decision = st.radio("Decision", ["Bat", "Field"], horizontal=True, key="decision")
+    
+    # Display venue info
+    venue_char = analyzer.get_venue_characteristics(venue)
+    st.markdown(f"""
+    <div class='venue-info'>
+        <h4>Venue Information: {venue}</h4>
+        <p><strong>Type:</strong> {venue_char['batting_friendly']}</p>
+        <p><strong>Average Score:</strong> {venue_char['avg_score']:.0f} runs</p>
+        <p><strong>Matches Played:</strong> {venue_char['total_matches']}</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     if st.button("Analyze Match", use_container_width=True, key="predict_btn"):
         with st.spinner("Analyzing..."):
-            prediction = analyzer.predict_match(home_team, away_team, venue="Unknown")
+            prediction = analyzer.predict_match(home_team, away_team, venue=venue)
             
             st.success("Analysis Complete!")
             
@@ -352,6 +419,7 @@ def prediction_page():
                 st.markdown(f"""
                 <div class='team-display'>
                     <div class='team-name'>{home_team}</div>
+                    <div class='team-badge'>Home</div>
                     <div class='probability-container'>
                         <div class='probability-label'>Win Chance</div>
                         <div class='probability-bar'>
@@ -367,6 +435,7 @@ def prediction_page():
                 st.markdown(f"""
                 <div class='team-display'>
                     <div class='team-name'>{away_team}</div>
+                    <div class='team-badge'>Away</div>
                     <div class='probability-container'>
                         <div class='probability-label'>Win Chance</div>
                         <div class='probability-bar'>
@@ -445,6 +514,7 @@ def prediction_page():
             
             st.markdown("<div class='section-header'>Key Insights</div>", unsafe_allow_html=True)
             
+            team_stats = analyzer.get_team_statistics()
             team1_stats = team_stats[home_team]
             team2_stats = team_stats[away_team]
             
@@ -453,20 +523,20 @@ def prediction_page():
             with col1:
                 st.markdown(f"""
                 <div class='insight-box'>
-                    <h4>{home_team}</h4>
+                    <h4>{home_team} (Home)</h4>
                     <p><strong>Win Rate:</strong> {team1_stats['win_rate']:.1%}</p>
                     <p><strong>Avg Runs:</strong> {team1_stats['avg_runs']:.0f}</p>
-                    <p><strong>Matches:</strong> {team1_stats['matches']}</p>
+                    <p><strong>Total Matches:</strong> {team1_stats['matches']}</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col2:
                 st.markdown(f"""
                 <div class='insight-box'>
-                    <h4>{away_team}</h4>
+                    <h4>{away_team} (Away)</h4>
                     <p><strong>Win Rate:</strong> {team2_stats['win_rate']:.1%}</p>
                     <p><strong>Avg Runs:</strong> {team2_stats['avg_runs']:.0f}</p>
-                    <p><strong>Matches:</strong> {team2_stats['matches']}</p>
+                    <p><strong>Total Matches:</strong> {team2_stats['matches']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
