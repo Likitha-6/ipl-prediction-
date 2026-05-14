@@ -1,5 +1,5 @@
 """
-IPL Match Prediction Dashboard - PREMIUM DESIGN
+IPL Match Prediction Dashboard - PREMIUM DESIGN (NO CACHE)
 Modern, attractive interface with advanced styling and animations
 """
 
@@ -36,7 +36,6 @@ st.markdown("""
         color: #f1f5f9;
     }
     
-    /* HEADER */
     .header-container {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         padding: 4rem 2rem;
@@ -82,43 +81,6 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
     
-    /* CARDS */
-    .prediction-card {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        padding: 2.5rem;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        margin: 1.5rem 0;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .prediction-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #667eea, transparent);
-        animation: shimmer 3s infinite;
-    }
-    
-    @keyframes shimmer {
-        0% { left: -100%; }
-        50% { left: 100%; }
-        100% { left: 100%; }
-    }
-    
-    .prediction-card:hover {
-        transform: translateY(-8px);
-        border-color: rgba(102, 126, 234, 0.5);
-        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
-    }
-    
-    /* TEAM DISPLAY */
     .team-display {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-radius: 18px;
@@ -141,7 +103,6 @@ st.markdown("""
         font-family: 'Poppins', sans-serif;
     }
     
-    /* PROBABILITY DISPLAY */
     .probability-container {
         margin: 2rem 0;
     }
@@ -177,7 +138,6 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
     }
     
-    /* STAT BOXES */
     .stat-box {
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         border: 1px solid rgba(102, 126, 234, 0.2);
@@ -213,7 +173,6 @@ st.markdown("""
         font-weight: 600;
     }
     
-    /* DIFFICULTY INDICATORS */
     .difficulty-badge {
         padding: 3rem 2rem;
         border-radius: 20px;
@@ -257,7 +216,6 @@ st.markdown("""
         opacity: 0.9;
     }
     
-    /* SECTION HEADER */
     .section-header {
         font-size: 2.2rem;
         font-weight: 800;
@@ -270,7 +228,6 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
     
-    /* INSIGHT BOX */
     .insight-box {
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
         border-left: 4px solid #667eea;
@@ -301,7 +258,6 @@ st.markdown("""
         font-size: 0.95rem;
     }
     
-    /* BUTTONS */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -320,37 +276,14 @@ st.markdown("""
         transform: translateY(-3px);
         box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
     }
-    
-    /* SELECTBOX */
-    .stSelectbox, .stRadio {
-        color: #f1f5f9;
-    }
-    
-    /* SIDEBAR */
-    .sidebar .sidebar-content {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    }
-    
-    /* TABLES */
-    .stDataFrame {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    }
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_resource
-def load_analyzer():
-    return IPLAnalyzer('data/IPL_FINAL.csv')
-
-try:
-    analyzer = load_analyzer()
-    data_loaded = analyzer.df is not None
-except Exception as e:
-    st.error(f"Error loading data: {e}")
-    data_loaded = False
+# LOAD DATA - NO CACHE
+analyzer = IPLAnalyzer('data/IPL_FINAL.csv')
+data_loaded = analyzer.df is not None
 
 def main():
-    # PREMIUM HEADER
     st.markdown("""
     <div class='header-container'>
         <div class='header-content'>
@@ -364,7 +297,6 @@ def main():
         st.error("Failed to load data")
         return
     
-    # NAVIGATION
     st.sidebar.markdown("### Select Analysis")
     page = st.sidebar.radio(
         "Navigation",
@@ -412,7 +344,6 @@ def prediction_page():
             
             st.success("Analysis Complete!")
             
-            # PROBABILITY SECTION
             st.markdown("<div class='section-header'>Win Probability</div>", unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
@@ -447,7 +378,6 @@ def prediction_page():
                 </div>
                 """, unsafe_allow_html=True)
             
-            # CHART
             fig = go.Figure(data=[
                 go.Bar(x=[home_team, away_team], 
                        y=[prediction['team1_win_prob'], prediction['team2_win_prob']], 
@@ -466,7 +396,6 @@ def prediction_page():
             )
             st.plotly_chart(fig, use_container_width=True)
             
-            # EXPECTED SCORES
             st.markdown("<div class='section-header'>Expected Performance</div>", unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
@@ -489,7 +418,6 @@ def prediction_page():
                 </div>
                 """, unsafe_allow_html=True)
             
-            # CHASE DIFFICULTY
             st.markdown("<div class='section-header'>Chase Analysis</div>", unsafe_allow_html=True)
             
             target = prediction['team2_avg_runs']
@@ -515,7 +443,6 @@ def prediction_page():
             </div>
             """, unsafe_allow_html=True)
             
-            # KEY INSIGHTS
             st.markdown("<div class='section-header'>Key Insights</div>", unsafe_allow_html=True)
             
             team1_stats = team_stats[home_team]
@@ -591,28 +518,26 @@ def team_analysis_page():
 def venue_stats_page():
     st.markdown("<div class='section-header'>Venue Insights</div>", unsafe_allow_html=True)
     
-    with st.spinner("Loading..."):
-        venues = analyzer.get_venue_statistics()
-        
-        if venues is not None and len(venues) > 0:
-            fig = px.bar(venues.head(10), x=venues.head(10).index, y='total_matches')
-            fig.update_traces(marker_color='#667eea')
-            fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#f1f5f9'))
-            st.plotly_chart(fig, use_container_width=True)
-            st.dataframe(venues.head(15), use_container_width=True)
+    venues = analyzer.get_venue_statistics()
+    
+    if venues is not None and len(venues) > 0:
+        fig = px.bar(venues.head(10), x=venues.head(10).index, y='total_matches')
+        fig.update_traces(marker_color='#667eea')
+        fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#f1f5f9'))
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(venues.head(15), use_container_width=True)
 
 def season_2026_page():
     st.markdown("<div class='section-header'>IPL 2026 Season</div>", unsafe_allow_html=True)
     
-    with st.spinner("Loading..."):
-        standings, matches = analyzer.get_2026_season_data()
-        
-        if standings is not None and len(standings) > 0:
-            st.subheader("League Standings")
-            standings_display = standings.copy()
-            standings_display.insert(0, 'Position', range(1, len(standings_display) + 1))
-            st.dataframe(standings_display, use_container_width=True, hide_index=True)
+    standings, matches = analyzer.get_2026_season_data()
+    
+    if standings is not None and len(standings) > 0:
+        st.subheader("League Standings")
+        standings_display = standings.copy()
+        standings_display.insert(0, 'Position', range(1, len(standings_display) + 1))
+        st.dataframe(standings_display, use_container_width=True, hide_index=True)
 
 def historical_data_page():
     st.markdown("<div class='section-header'>Historical Data</div>", unsafe_allow_html=True)
